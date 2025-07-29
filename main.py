@@ -5,8 +5,8 @@ import keyboard  # For global hotkey
 import numpy as np  # For fast image processing
 
 # Coordinates for ball detection rectangle
-X_START, Y_START = 1247, 31
-X_END, Y_END = 1808, 980  # Quick fix: avoid bottom black surface
+X_START, Y_START = 1358, 31
+X_END, Y_END = 1920, 980  # Quick fix: avoid bottom black surface
 
 MOUSE_Y = 1000  # fixed Y position for mouse
 
@@ -15,13 +15,6 @@ BLACK_RGB = (0, 0, 0)
 TOLERANCE = 80  # Loosened: Accept colors with RGB values close to black within this range
 
 tracking = False  # Whether tracking is active
-MOUSE_STEP = 10  # Number of pixels to move per frame
-LEFT_WALL = X_START
-RIGHT_WALL = X_END
-WALL_THRESHOLD = 20  # How close to the wall to consider a bounce
-
-last_ball_x = None
-mouse_direction = 1  # 1 for right, -1 for left
 mouse_x = (X_START + X_END) // 2  # Start mouse X in middle
 program_running = True
 pending_mouse_down = False
@@ -43,11 +36,11 @@ def is_isolated_black(screen, x, y):
     return count <= 3  # Only consider as ball if not part of a line
 
 
-print("Press SPACEBAR to start tracking and hold mouse down.\nPress SPACEBAR again to stop and exit.\n(Requires 'keyboard' package. Install with: pip install keyboard)")
+print("Press ENTER to start tracking and hold mouse down.\nPress ENTER again to stop and exit.")
 
 spacebar_press_count = 0
 
-CENTER_X = 1528
+CENTER_X = 1639
 CENTER_Y = 1000
 
 def on_enter():
@@ -104,24 +97,13 @@ try:
                 ball_x = X_START + avg_x
                 ball_pos = (ball_x, MOUSE_Y)
                 print(f"Detected ball X at: {ball_x}")
-
-                # Predictive movement logic
-                if last_ball_x is not None:
-                    if abs(ball_x - LEFT_WALL) < WALL_THRESHOLD:
-                        mouse_direction = 1  # Bounce right
-                        print("Bounce detected: moving right")
-                    elif abs(ball_x - RIGHT_WALL) < WALL_THRESHOLD:
-                        mouse_direction = -1  # Bounce left
-                        print("Bounce detected: moving left")
-                last_ball_x = ball_x
             else:
                 print("No ball detected.")
 
-            # Move mouse smoothly in the current direction
-            mouse_x += mouse_direction * MOUSE_STEP
-            mouse_x = max(LEFT_WALL, min(RIGHT_WALL, mouse_x))
-            pyautogui.moveTo(mouse_x, MOUSE_Y)
-            print(f"Moved mouse to: ({mouse_x}, {MOUSE_Y})")
+            if ball_pos:
+                pyautogui.moveTo(ball_pos[0], ball_pos[1])
+                print(f"Moved mouse to: ({ball_pos[0]}, {ball_pos[1]}) and quick down/up.")
+
 
         time.sleep(0.01)
 
