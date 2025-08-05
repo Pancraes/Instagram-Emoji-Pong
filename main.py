@@ -5,7 +5,7 @@ import ctypes
 
 # === SETTINGS ===
 X_START, Y_START = 1358, 31
-X_END, Y_END = 1920, 960
+X_END, Y_END = 1920, 970
 WIDTH, HEIGHT = X_END - X_START, Y_END - Y_START
 MOUSE_Y = 1000
 CENTER_X = 1639
@@ -53,6 +53,8 @@ keyboard.add_hotkey('enter', on_enter)
 print("Press ENTER to start/stop tracking.")
 
 frame_count = 0
+previous_raw_ball_x = None
+direction = None  # Can be 'left', 'right', or None
 
 try:
     while program_running:
@@ -69,6 +71,7 @@ try:
             diff_rg = np.abs(r - g)
             diff_gb = np.abs(g - b)
 
+
             gray_mask = (
                 (r >= GRAY_MIN) & (r <= GRAY_MAX) &
                 (g >= GRAY_MIN) & (g <= GRAY_MAX) &
@@ -76,18 +79,41 @@ try:
                 (diff_rg < DIFF_TOL) & (diff_gb < DIFF_TOL)
             )
 
-            gray_mask[-20:, :] = False  # Avoid bottom platform
-
             ys, xs = np.where(gray_mask)
 
             if len(xs) > 100:
                 median_x = int(np.median(xs)) * 2
-                ball_x = X_START + median_x
-                move_mouse(ball_x, MOUSE_Y)
+                raw_ball_x = X_START + median_x
+
+                # Determine new direction
+                if previous_raw_ball_x is not None:
+                    if raw_ball_x > previous_raw_ball_x:
+                        new_direction = 'right'
+                    elif raw_ball_x < previous_raw_ball_x:
+                        new_direction = 'left'
+                    else:
+                        new_direction = direction  # No change
+
+                    # Update direction only if it has changed
+                    if new_direction != direction:
+                        direction = new_direction
+
+                # Apply offset based on direction
+                offset = 0
+                if direction == 'left':
+                    offset = -75
+                elif direction == 'right':
+                    offset = 75
+
+                final_x = raw_ball_x + offset
+                final_x = max(X_START, min(final_x, X_END))  # Clamp to bounds
+
+                move_mouse(final_x, MOUSE_Y)
+                previous_raw_ball_x = raw_ball_x
 
             frame_count += 1
             if frame_count % 30 == 0:
-                print(f"[Debug] Ball pixels: {len(xs)}")
+                print(f"[Debug] Ball pixels: {len(xs)} | Direction: {direction}")
 
 except KeyboardInterrupt:
     print("Stopped by user.")
