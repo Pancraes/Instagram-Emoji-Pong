@@ -3,7 +3,6 @@ import mss
 import keyboard
 import ctypes
 
-# === SETTINGS ===
 X_START, Y_START = 1358, 31
 X_END, Y_END = 1920, 970
 WIDTH, HEIGHT = X_END - X_START, Y_END - Y_START
@@ -11,7 +10,6 @@ MOUSE_Y = 1000
 CENTER_X = 1639
 CENTER_Y = 1000
 
-# Looser mask settings for fast-moving or blurred ball
 GRAY_MIN = 10
 GRAY_MAX = 160
 DIFF_TOL = 15
@@ -54,7 +52,7 @@ print("Press ENTER to start/stop tracking.")
 
 frame_count = 0
 previous_raw_ball_x = None
-direction = None  # Can be 'left', 'right', or None
+direction = None
 
 try:
     while program_running:
@@ -85,20 +83,17 @@ try:
                 median_x = int(np.median(xs)) * 2
                 raw_ball_x = X_START + median_x
 
-                # Determine new direction
                 if previous_raw_ball_x is not None:
                     if raw_ball_x > previous_raw_ball_x:
                         new_direction = 'right'
                     elif raw_ball_x < previous_raw_ball_x:
                         new_direction = 'left'
                     else:
-                        new_direction = direction  # No change
+                        new_direction = direction
 
-                    # Update direction only if it has changed
                     if new_direction != direction:
                         direction = new_direction
 
-                # Apply offset based on direction
                 offset = 0
                 if direction == 'left':
                     offset = -75
@@ -106,7 +101,7 @@ try:
                     offset = 75
 
                 final_x = raw_ball_x + offset
-                final_x = max(X_START, min(final_x, X_END))  # Clamp to bounds
+                final_x = max(X_START, min(final_x, X_END))
 
                 move_mouse(final_x, MOUSE_Y)
                 previous_raw_ball_x = raw_ball_x
